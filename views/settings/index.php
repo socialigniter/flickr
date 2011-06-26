@@ -6,22 +6,34 @@
 		<p><?= form_dropdown('enabled', config_item('enable_disable'), $settings['flickr']['enabled']) ?></p>
 	</div>
 	
-	<h3>Permissions</h3>
+	<h3>Application Keys</h3>
 
-	<p>Create
-	<?= form_dropdown('create_permission', config_item('users_levels'), $settings['flickr']['create_permission']) ?>
-	</p>
-
-	<p>Publish
-	<?= form_dropdown('publish_permission', config_item('users_levels'), $settings['flickr']['publish_permission']) ?>	
-	</p>
-
-	<p>Manage All
-	<?= form_dropdown('manage_permission', config_item('users_levels'), $settings['flickr']['manage_permission']) ?>	
-	</p>
-		
+	<p>Flickr requires <a href="http://www.flickr.com/services/apps/create/apply/" target="_blank">registering your application</a></p>
+				
+	<p><input type="text" name="consumer_key" value="<?= $settings['flickr']['consumer_key'] ?>"> Consumer Key </p> 
+	<p><input type="text" name="consumer_key_secret" value="<?= $settings['flickr']['consumer_key_secret'] ?>"> Consumer Key Secret</p>
+			
 </div>
 
+<span class="item_separator"></span>
+
+<div class="content_wrap_inner">
+
+	<h3>Social</h3>
+
+	<p>Sign In
+	<?= form_dropdown('social_login', config_item('yes_or_no'), $settings['flickr']['social_login']) ?>
+	</p>
+	
+	<p>Connections 
+	<?= form_dropdown('social_connection', config_item('yes_or_no'), $settings['flickr']['social_connection']) ?>
+	</p>	
+
+	<p>Post
+	<?= form_dropdown('social_post', config_item('yes_or_no'), $settings['flickr']['social_post']) ?>	
+	</p>
+
+</div>
 
 <span class="item_separator"></span>
 
@@ -37,7 +49,7 @@
 	<?= form_dropdown('comments_per_page', config_item('amount_increments_five'), $settings['flickr']['comments_per_page']) ?>
 	</p>
 
-	<input type="hidden" name="module" value="module-template">
+	<input type="hidden" name="module" value="flickr">
 
 	<p><input type="submit" name="save" value="Save" /></p>
 
