@@ -1,0 +1,1 @@
+<li><a class="sidebar_icon" href="<?= base_url() ?>home/flickr"><img src="<?= $this_module_assets ?>flickr_24.png"><span>Flickr</span></a></li>
