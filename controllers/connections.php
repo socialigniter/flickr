@@ -9,6 +9,12 @@ class Connections extends MY_Controller
 		   
 		if (config_item('flickr_enabled') != 'TRUE') redirect(base_url());
 	
+		$config = array(
+			'flickr_consumer_key' => config_item('flickr_consumer_key'),
+			'flickr_consumer_secret' => config_item('flickr_consumer_key_secret')
+		);
+	
+		$this->load->library('flickr_library', $config);
 		
 		// Get Site for Flickr
 		$this->module_site = $this->social_igniter->get_site_view_row('module', 'flickr');
@@ -33,5 +39,65 @@ class Connections extends MY_Controller
 		// User Is Logged In
 		if (!$this->social_auth->logged_in()) redirect('connections/flickr');
 
+		// Do Flickr Auth
+		if (!$this->flickr_library->logged_in())
+		{
+			// Redirect after auth
+			$this->flickr_library->set_callback(base_url().'flickr/connections/add');
 
+			// Send to login
+			$this->flickr_library->login();
+		}
+		else
+		{
+			// Get Tokens, Check Connection, Add
+			$tokens 			= $this->flickr_library->get_tokens();	
+			$check_connection	= $this->social_auth->check_connection_auth('flickr', $tokens['oauth_token'], $tokens['oauth_token_secret']);
+			$twitter_user		= $this->flickr_library->call('get', 'account/verify_credentials');
+
+			if (connection_has_auth($check_connection))
+			{			
+				$this->session->set_flashdata('message', "You've already connected this Flickr account");
+				redirect('settings/connections', 'refresh');
+			}
+			else
+			{
+				// Add Connection	
+	       		$connection_data = array(
+	       			'site_id'				=> $this->module_site->site_id,
+	       			'user_id'				=> $this->session->userdata('user_id'),
+	       			'module'				=> 'flickr',
+	       			'type'					=> 'primary',
+	       			'connection_user_id'	=> $flickr_user->user->id,
+	       			'connection_username'	=> $flickr_user->user->username->_content,
+	       			'auth_one'				=> $tokens['oauth_token'],
+	       			'auth_two'				=> $tokens['oauth_token_secret']
+	       		);
+
+	       		// Update / Add Connection	       		
+	       		if ($check_connection)
+	       		{
+	       			$connection = $this->social_auth->update_connection($check_connection->connection_id, $connection_data);
+	       		}
+	       		else
+	       		{
+					$connection = $this->social_auth->add_connection($connection_data);
+				}
+
+				// Connection Status				
+				if ($connection)
+				{
+					$this->social_auth->set_userdata_connections($this->session->userdata('user_id'));
+				
+					$this->session->set_flashdata('message', "Flickr account connected");
+				 	redirect('settings/connections', 'refresh');
+				}
+				else
+				{
+				 	$this->session->set_flashdata('message', "That Flickr account is connected to another user");
+				 	redirect('settings/connections', 'refresh');
+				}
+			}		
+		}
+	}
 }
