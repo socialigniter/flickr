@@ -9,12 +9,13 @@ class Settings extends Dashboard_Controller
         
         $this->load->config('flickr');
         
-		$this->data['page_title']	= 'Flickr';
+		$this->data['page_title']	= 'Settings';
     }
  
  	function index()
 	{ 	
-		$this->data['sub_title'] = 'Settings';
+		$this->data['sub_title']	= 'Flickr';
+		$this->data['shared_ajax'] .= $this->load->view(config_item('dashboard_theme').'/partials/settings_modules_ajax.php', $this->data, true);		
 		$this->render('dashboard_wide');
 	}
 	

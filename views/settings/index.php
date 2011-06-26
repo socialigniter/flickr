@@ -1,4 +1,4 @@
-<form name="settings" method="post" action="<?= base_url() ?>settings/update" enctype="multipart/form-data">	
+<form name="settings_update" id="settings_update" method="post" action="<?= base_url() ?>api/settings/modify" enctype="multipart/form-data">
 <div class="content_wrap_inner">
 
 	<div class="content_inner_top_right">
@@ -10,8 +10,8 @@
 
 	<p>Flickr requires <a href="http://www.flickr.com/services/apps/create/apply/" target="_blank">registering your application</a></p>
 				
-	<p><input type="text" name="consumer_key" value="<?= $settings['flickr']['consumer_key'] ?>"> Consumer Key </p> 
-	<p><input type="text" name="consumer_key_secret" value="<?= $settings['flickr']['consumer_key_secret'] ?>"> Consumer Key Secret</p>
+	<p><input type="text" name="consumer_key" value="<?= $settings['flickr']['consumer_key'] ?>"> Key </p> 
+	<p><input type="text" name="consumer_key_secret" value="<?= $settings['flickr']['consumer_key_secret'] ?>"> Secret</p>
 			
 </div>
 
@@ -55,3 +55,5 @@
 
 </div>
 </form>
+
+<?= $shared_ajax ?>
