@@ -28,10 +28,14 @@ class Connections extends MY_Controller
 		
 	}
 	
-	function signup()
+	function test()
 	{
-		echo 'echo at signup steps';
+			$tokens 			= $this->flickr_library->get_tokens();	
+			$check_connection	= $this->social_auth->check_connection_auth('flickr', $tokens['oauth_token'], $tokens['oauth_token_secret']);
+			$flickr_user		= $this->flickr_library->call('get', 'flickr.test.login');
 
+
+		print_r($flickr_user);
 	}
 
 	function add()
@@ -53,7 +57,7 @@ class Connections extends MY_Controller
 			// Get Tokens, Check Connection, Add
 			$tokens 			= $this->flickr_library->get_tokens();	
 			$check_connection	= $this->social_auth->check_connection_auth('flickr', $tokens['oauth_token'], $tokens['oauth_token_secret']);
-			$twitter_user		= $this->flickr_library->call('get', 'account/verify_credentials');
+			$flickr_user		= $this->flickr_library->call('get', 'flickr.test.login');
 
 			if (connection_has_auth($check_connection))
 			{			

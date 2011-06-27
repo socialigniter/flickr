@@ -256,7 +256,7 @@ class flickrResponseOauth {
 	{
 		$this->__resp = $resp;
 
-		if ( strpos($this->__resp->type, 'json') !== FALSE )
+		if ( strpos($this->__resp->type, 'text/plain') !== FALSE )
 		{
 			$this->__resp->data = json_decode($this->__resp->data);
 		}
@@ -341,7 +341,10 @@ class flickrOauth extends flickrConnection {
 	
 	public function call($method, $path, $args = NULL)
 	{
-		$response = $this->_httpRequest(strtoupper($method), $this->_apiUrl.'/'.$path.'.json', $args);
+		$args['format'] = 'json';
+		$args['nojsoncallback'] = 1;
+		$args['method'] = $path;
+		$response = $this->_httpRequest(strtoupper($method), $this->_apiUrl, $args);
 		
 		// var_dump($response);
 		// die();
