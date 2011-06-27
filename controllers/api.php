@@ -21,7 +21,16 @@ class Api extends Oauth_Controller
 
 	function new_get()
 	{
-		$this->response(array('status' => 'success', 'message' => 'Yay some new content', 'data'=> 2), 200);
+		if ($new_content = $this->social_igniter->get_content_new_count('flickr'))
+		{
+         	$message = array('status' => 'success', 'message' => $new_content);	
+		}
+		else
+		{
+         	$message = array('status' => 'error', 'message' => $new_content);			
+		}
+		
+        $this->response($message, 200);		
 	}
 	
 	function download_get()
@@ -49,6 +58,7 @@ class Api extends Oauth_Controller
 			
 				$image_content = array(
 					'flickr_id'			=> $photo->id,
+					'date_taken'		=> $photo->datetaken,
 					'description'		=> $photo->description->_content,
 					'small'				=> 'small_'.$image_filename,
 					'medium'			=> 'medium_'.$image_filename,
@@ -61,7 +71,7 @@ class Api extends Oauth_Controller
 					'parent_id'			=> $this->input->post('parent_id'),
 					'category_id'		=> $this->input->post('category_id'),
 					'module'			=> 'flickr',
-					'type'				=> 'photo',  // activity stream type
+					'type'				=> 'photo',  // ActivityStream type
 					'source'			=> 'import',
 					'order'				=> 0,
 		    		'user_id'			=> config_item('flickr_import_owner_id'),
@@ -75,8 +85,8 @@ class Api extends Oauth_Controller
 					'geo_lat'			=> $photo->latitude,
 					'geo_long'			=> $photo->longitude,
 					'viewed'			=> 'N',
-					'approval'			=> 'Y', // already approved
-					'status'			=> 'P'  // published
+					'approval'			=> 'Y', // Already Approved
+					'status'			=> 'P'  // Published
 		    	);
 		    	
 				$activity_data = array(			
@@ -93,16 +103,25 @@ class Api extends Oauth_Controller
 	    		make_folder(config_item('flickr_images_folder').$photo->id.'/');
 	    		
 	    		// Small
-				$this->image_model->get_external_image($photo->url_t, config_item('flickr_images_folder').$photo->id.'/small_'.$image_filename);				    	
-						
+				if (isset($photo->url_t))
+				{
+					$this->image_model->get_external_image($photo->url_t, config_item('flickr_images_folder').$photo->id.'/small_'.$image_filename);				    	
+				}
+
 				// Medium
-				$this->image_model->get_external_image($photo->url_s, config_item('flickr_images_folder').$photo->id.'/medium_'.$image_filename);				    	
+				if (isset($photo->url_s))
+				{
+					$this->image_model->get_external_image($photo->url_s, config_item('flickr_images_folder').$photo->id.'/medium_'.$image_filename);				    	
+				}
 				
 				// Large
-				$this->image_model->get_external_image($photo->url_z, config_item('flickr_images_folder').$photo->id.'/large_'.$image_filename);			
+				if (isset($photo->url_z))
+				{
+					$this->image_model->get_external_image($photo->url_z, config_item('flickr_images_folder').$photo->id.'/large_'.$image_filename);			
+				}
 
 				// Original
-				if (config_item('flickr_images_sizes_original') == 'yes')
+				if (isset($photo->url_o) AND config_item('flickr_images_sizes_original') == 'yes')
 				{ 
 					$this->image_model->get_external_image($photo->url_o, config_item('flickr_images_folder').$photo->id.'/large_'.$image_filename);
 				}
