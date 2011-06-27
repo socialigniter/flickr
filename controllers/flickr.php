@@ -23,7 +23,8 @@ class Flickr extends Site_Controller
 		
 			$photo_data = json_decode($photo->content);
 			
-			$this->data['photo'] = base_url().config_item('flickr_images_folder').$photo->content_id.'/'.$photo_data->large;
+			$this->data['photo'] = base_url().config_item('flickr_images_folder').$photo_data->flickr_id.'/'.$photo_data->large;
+			$this->data['title'] = $photo->title;
 		}
 
 		$this->data['sub_title'] = $photo->title;		

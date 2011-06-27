@@ -33,22 +33,23 @@ class Api extends Oauth_Controller
 
 		foreach ($recent_images->photos->photo as $photo)
 		{	
-			$check_photo = $this->social_igniter->get_content($photo->canonical);
+			$canonical 		= 'http://flickr.com/photos/'.$photo->owner.'/'.$photo->id;
+			$check_photo 	= $this->social_igniter->check_content_duplicate('canonical', $canonical);
 		
-			if (!$check_photo)
+			if ($check_photo)
 			{
+				// Image Filename
 				$image_name	= flickr_make_image_name($photo->title, $photo->id);
-	
-				preg_match("/\.([^\.]+)$/", $photo->url_t, $extension_matches);    
-	
+				preg_match("/\.([^\.]+)$/", $photo->url_t, $extension_matches);	
 				$image_filename = $image_name.'.'.$extension_matches[1];
 			
 				$image_content = array(
-					'flickr_id'	=> $photo->id,
-					'small'		=> 'small_'.$image_filename,
-					'medium'	=> 'medium_'.$image_filename,
-					'large'		=> 'large_'.$image_filename,
-					'original'	=> 'original_'.$image_filename
+					'flickr_id'			=> $photo->id,
+					'description'		=> $photo->description->_content,
+					'small'				=> 'small_'.$image_filename,
+					'medium'			=> 'medium_'.$image_filename,
+					'large'				=> 'large_'.$image_filename,
+					'original'			=> 'original_'.$image_filename
 				);
 				
 		    	$content_data = array(
@@ -64,7 +65,7 @@ class Api extends Oauth_Controller
 					'title_url'			=> form_title_url($photo->title, NULL),
 					'content'			=> json_encode($image_content),
 					'details'			=> '',
-					'canonical'			=> 'http://flickr.com/photos/'.$photo->owner.'/'.$photo->id,
+					'canonical'			=> $canonical,
 					'access'			=> 'E',  // E-everyone P-private
 					'comments_allow'	=> 'Y',
 					'geo_lat'			=> $photo->latitude,
@@ -77,24 +78,30 @@ class Api extends Oauth_Controller
 				$activity_data = array(			
 					'title'			=> $photo->title,
 					'content' 		=> $photo->description->_content,
-					'thumb' 		=> base_url().config_item('flickr_images_folder').$photo->id."/small_".$image_filename
+					'thumb' 		=> base_url().config_item('flickr_images_folder').$photo->id."/small_".$image_filename,
+					'description'	=> $photo->description->_content
 				);
 	
 				$add_photo = $this->social_igniter->add_content($content_data, $activity_data);
 							
 	    		// Snatch Flickr Image
 	    		$this->load->model('image_model');
-	    		make_folder(config_item('flickr_images_folder').$add_photo['content']->content_id.'/');
+	    		make_folder(config_item('flickr_images_folder').$photo->id.'/');
 	    		
 	    		// Small
-				$this->image_model->get_external_image($photo->url_t, config_item('flickr_images_folder').$add_photo['content']->content_id.'/small_'.$image_filename);				    	
+				$this->image_model->get_external_image($photo->url_t, config_item('flickr_images_folder').$photo->id.'/small_'.$image_filename);				    	
 						
 				// Medium
-				$this->image_model->get_external_image($photo->url_s, config_item('flickr_images_folder').$add_photo['content']->content_id.'/medium_'.$image_filename);				    	
+				$this->image_model->get_external_image($photo->url_s, config_item('flickr_images_folder').$photo->id.'/medium_'.$image_filename);				    	
 				
 				// Large
-				$this->image_model->get_external_image($photo->url_z, config_item('flickr_images_folder').$add_photo['content']->content_id.'/large_'.$image_filename);				    				
-		
+				$this->image_model->get_external_image($photo->url_z, config_item('flickr_images_folder').$photo->id.'/large_'.$image_filename);				    				
+			
+				echo 'added';
+			}
+			else
+			{
+				echo 'already added';
 			}
 		
 		}
