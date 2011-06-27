@@ -18,18 +18,22 @@ class Api extends Oauth_Controller
 		// Get Site for Flickr
 		$this->module_site = $this->social_igniter->get_site_view_row('module', 'flickr');    
     }
-	
+
 	function new_get()
 	{
-		$this->response(array('data'=>2), 200);
+		$this->response(array('status' => 'success', 'message' => 'Yay some new content', 'data'=> 2), 200);
 	}
-		
-	function create_image_get()
+	
+	function download_get()
 	{
 		$this->load->library('curl');
 		
-		$recent_images = $this->curl->simple_get('http://junk:8890/data/flickr.photos.getRecent.json');
-		$recent_images = json_decode($recent_images);
+		$recent_images	= $this->curl->simple_get('http://junk:8890/data/flickr.photos.getRecent.json');
+		$recent_images	= json_decode($recent_images);
+		$archive_count	= 0;
+
+		// NEEDS logic for checking if new images exist...
+		// NEEDS logic for pagination archiving...
 
 		foreach ($recent_images->photos->photo as $photo)
 		{	
@@ -95,65 +99,23 @@ class Api extends Oauth_Controller
 				$this->image_model->get_external_image($photo->url_s, config_item('flickr_images_folder').$photo->id.'/medium_'.$image_filename);				    	
 				
 				// Large
-				$this->image_model->get_external_image($photo->url_z, config_item('flickr_images_folder').$photo->id.'/large_'.$image_filename);				    				
-			
-				echo 'added';
+				$this->image_model->get_external_image($photo->url_z, config_item('flickr_images_folder').$photo->id.'/large_'.$image_filename);			
+
+				// Original
+				if (config_item('flickr_images_sizes_original') == 'yes')
+				{ 
+					$this->image_model->get_external_image($photo->url_o, config_item('flickr_images_folder').$photo->id.'/large_'.$image_filename);
+				}
+				
+				$archive_count++;				
 			}
-			else
-			{
-				echo 'already added';
-			}
-		
 		}
-	
-	}
-
-/*						
-			echo '<p>';
-			echo '<b>Date Taken: </b>'.$photo->datetaken.'<br>';
-			echo '<b>Title:</b> '.$photo->title.'<br>';
-			echo '<b>Description:</b>'.$photo->description->_content.'<br>';
-			echo '<b>Lat, Long:</b> '.$photo->latitude.', '.$photo->longitude.'<br>';				
-			echo '<b>Source:</b> http://flickr.com/photos/'.$photo->owner.'/'.$photo->id.'<br>';
-			echo '<b>Tiny: </b>'.$photo->url_t.'<br>';
-			echo '<b>Small: </b>'.$photo->url_s.'<br>';
-			echo '<b>Bigger: </b>'.$photo->url_z.'<br>';
-			echo '<b>Original: </b>'.$photo->url_o.'</p>';
-			echo '<hr>';
-*/
-
-	function download_get()
-	{
-	    	$content_data = array(
-	    		'site_id'			=> config_item('site_id'),
-				'parent_id'			=> $this->input->post('parent_id'),
-				'category_id'		=> $this->input->post('category_id'),
-				'module'			=> 'flickr',
-				'type'				=> 'photo',  // activity stream type
-				'source'			=> 'import',
-				'order'				=> 0,
-	    		'user_id'			=> config_item('flickr_import_owner_id'),
-				'title'				=> $title,
-				'title_url'			=> form_title_url($title, NULL),
-				'content'			=> $content,
-				'details'			=> '',
-				'access'			=> 'E',  // E-everyone P-private
-				'comments_allow'	=> 'Y',
-				'geo_lat'			=> $lat,
-				'geo_long'			=> $lng,
-				'viewed'			=> 'N',
-				'approval'			=> 'Y', // already approved
-				'status'			=> 'P'  // published
-	    	);
-
-			// Insert, also creates activity entry
-			$result = $this->social_igniter->add_content($content_data);
 		
-		$this->social_tools->process_tags(array('tag2','tag3'), $result['content']->content_id);
-	
-	
-		$this->response(array('since'=>$_GET['since']), 200);
+        // Needs logic if photos are not archived successfully
+        $message = array('status' => 'success', 'message' => 'Flickr photos successfully archived', 'data' => $archive_count);
+		
+		// API Response		
+		$this->response($message, 200);
 	}
-
 
 }

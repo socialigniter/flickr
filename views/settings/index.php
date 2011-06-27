@@ -38,6 +38,16 @@
 <span class="item_separator"></span>
 
 <div class="content_wrap_inner">
+
+	<h3>Archive</h3>
+	
+	<p><input class="nullify" type="checkbox" name="images_sizes_original" value="<?= $settings['flickr']['images_sizes_original'] ?>"> Download Original Image</p>	
+
+</div>
+
+<span class="item_separator"></span>
+
+<div class="content_wrap_inner">
 			
 	<h3>Comments</h3>	
 
