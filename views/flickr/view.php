@@ -5,6 +5,6 @@
 
 <p><?= $description ?></p>
 
-<p>Originally posted on <a href="<?= $canonical ?>" target="_blank">Flickr</a></p>
+<p>Originally posted on <a href="<?= $canonical ?>" rel="canonical" target="_blank">Flickr</a></p>
 
 <?= $comments_view ?>

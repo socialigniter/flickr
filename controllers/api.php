@@ -23,11 +23,11 @@ class Api extends Oauth_Controller
 	{
 		if ($new_content = $this->social_igniter->get_content_new_count('flickr'))
 		{
-         	$message = array('status' => 'success', 'message' => $new_content);	
+         	$message = array('status' => 'success', 'message' => 'New Flickr photos', 'data' => $new_content);	
 		}
 		else
 		{
-         	$message = array('status' => 'error', 'message' => $new_content);			
+         	$message = array('status' => 'error', 'message' => 'No new Flickr photos', 'data' => $new_content);			
 		}
 		
         $this->response($message, 200);		
