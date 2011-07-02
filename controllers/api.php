@@ -67,7 +67,7 @@ class Api extends Oauth_Controller
 				);
 				
 		    	$content_data = array(
-		    		'site_id'			=> config_item('site_id'),
+		    		'site_id'			=> $this->module_site->site_id,
 					'parent_id'			=> $this->input->post('parent_id'),
 					'category_id'		=> $this->input->post('category_id'),
 					'module'			=> 'flickr',
