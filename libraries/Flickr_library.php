@@ -61,6 +61,7 @@ class flickrException extends Exception {
 	
 	function __construct($string)
 	{
+		#irc_debug('FlickrException: ' . $string);
 		parent::__construct($string);
 	}
 	
@@ -91,10 +92,11 @@ class flickrConnection {
 	private function _initConnection($url)
 	{
 		$this->_ch = curl_init($url);
+		#irc_debug('curl:' . $url);
 		curl_setopt($this->_ch, CURLOPT_RETURNTRANSFER, TRUE);
 	}
 	
-	public function get($url, $params)
+	public function get($url, $params, $force_oauth_in_query_string=FALSE)
 	{
 		if ( count($params['request']) > 0 )
 		{
@@ -108,9 +110,19 @@ class flickrConnection {
 			$url = substr($url, 0, -1);
 		}
 		
+		if($force_oauth_in_query_string) 
+		{	
+			if ( count($params['request']) == 0 )
+				$url .= '?';
+			else
+				$url .= '&';
+				
+			foreach($params['oauth'] as $k=>$v)
+				$url .= "{$k}={$v}&";
+		}
+
 		$this->_initConnection($url);
 		$response = $this->_addCurl($url, $params);
-		#irc_debug('GET ' . $url);
 
 	    return $response;
 	}
@@ -206,7 +218,7 @@ class flickrConnection {
 					
 					if ( $response->__resp->code !== 200 )
 					{
-						throw new flickrException($response->__resp->code.' | Request Failed: '.$response->__resp->data->request.' - '.$response->__resp->data->error);
+						throw new flickrException($response->__resp->code.' | Request Failed: '.$response->__resp->data);
 					}
 					
 					return $response;
@@ -244,7 +256,7 @@ class flickrResponseOauth {
 	{
 		$this->__resp = $resp;
 
-		if ( strpos($this->__resp->type, 'json') !== FALSE )
+		if ( strpos($this->__resp->type, 'text/plain') !== FALSE )
 		{
 			$this->__resp->data = json_decode($this->__resp->data);
 		}
@@ -294,7 +306,7 @@ class flickrOauth extends flickrConnection {
 	function __construct($config)
 	{
 		parent::__construct();
-		
+
 		$this->_obj =& get_instance();
 		$this->_obj->load->library('unit_test');
 		
@@ -329,7 +341,10 @@ class flickrOauth extends flickrConnection {
 	
 	public function call($method, $path, $args = NULL)
 	{
-		$response = $this->_httpRequest(strtoupper($method), $this->_apiUrl.'/'.$path.'.json', $args);
+		$args['format'] = 'json';
+		$args['nojsoncallback'] = 1;
+		$args['method'] = $path;
+		$response = $this->_httpRequest(strtoupper($method), $this->_apiUrl, $args);
 		
 		// var_dump($response);
 		// die();
@@ -366,9 +381,11 @@ class flickrOauth extends flickrConnection {
 		{
 			$this->_setAccessKey($_GET['oauth_token']);
 			$token = $this->_getAccessToken();
+
+			if(!$token)
+				throw new flickrException('Error authenticating with Flickr');
 			
 			$token = $token->_result;
-			
 			$token = ( is_bool($token) ) ? $token : (object) $token;
 			
 			if ( !empty($token->oauth_token) && !empty($token->oauth_token_secret) )
@@ -376,8 +393,8 @@ class flickrOauth extends flickrConnection {
 				$this->_setAccessKey($token->oauth_token);
 				$this->_setAccessSecret($token->oauth_token_secret);
 			}
-			
-			redirect(current_url());
+
+			redirect(current_url().'?oauth_error');
 			return NULL;
 		}
 	}
@@ -477,6 +494,8 @@ class flickrOauth extends flickrConnection {
 	private function _getAuthorizationUrl()
 	{
 		$token = $this->_getRequestToken();
+		// THIS!! THIS IS THE ANSWER!!! WTF?!?!?!
+		$this->_setAccessTokens(array('oauth_token'=>$token->oauth_token, 'oauth_token_secret'=>$token->oauth_token_secret));
 		return $this->_authorizationUrl.'?oauth_token=' . $token->oauth_token;
 	}
 	
@@ -487,10 +506,10 @@ class flickrOauth extends flickrConnection {
 	
 	private function _getAccessToken()
 	{
-		return $this->_httpRequest('GET', $this->_accessTokenUrl);
+		return $this->_httpRequest('GET', $this->_accessTokenUrl, array('oauth_verifier'=>$_GET['oauth_verifier']), TRUE);
 	}
 	
-	protected function _httpRequest($method = null, $url = null, $params = null)
+	protected function _httpRequest($method = null, $url = null, $params = null, $force_oauth_in_query_string = FALSE)
 	{
 		if( empty($method) || empty($url) ) return FALSE;
 		if ( empty($params['oauth_signature']) ) $params = $this->_prepareParameters($method, $url, $params);
@@ -501,7 +520,7 @@ class flickrOauth extends flickrConnection {
 			switch ( $method )
 			{
 				case 'GET':
-					return $this->_connection->get($url, $params);
+					return $this->_connection->get($url, $params, $force_oauth_in_query_string);
 				break;
 
 				case 'POST':
@@ -549,7 +568,9 @@ class flickrOauth extends flickrConnection {
 		$oauth['oauth_nonce'] 				= $this->_generateNonce();
 		$oauth['oauth_timestamp'] 			= time();
 		$oauth['oauth_signature_method'] 	= $this->_signatureMethod;
-		$oauth['oauth_version'] 			= $this->_version;
+		#$oauth['oauth_version'] 			= $this->_version;
+		#if(array_key_exists('oauth_verifier', $_GET))
+		#	$oauth['oauth_verifier'] = $_GET['oauth_verifier'];
 		
 		array_walk($oauth, array($this, '_encode_rfc3986'));
 		
@@ -561,7 +582,7 @@ class flickrOauth extends flickrConnection {
 		$encodedParams = array_merge($oauth, (array)$params);
 		
 		ksort($encodedParams);
-		
+		#irc_debug('params: ' . http_build_query($encodedParams));
 		$oauth['oauth_signature'] = $this->_encode_rfc3986($this->_generateSignature($method, $url, $encodedParams));
 		return array('request' => $params, 'oauth' => $oauth);
 	}
@@ -589,13 +610,14 @@ class flickrOauth extends flickrConnection {
 			$concatenatedParams .= "{$k}={$v}&";
 		}
 		
-		$concatenatedParams = $this->_encode_rfc3986(substr($concatenatedParams, 0, -1));
+		$concatenatedParams = $this->_encode_rfc3986(trim($concatenatedParams, '&'));
 
 		// normalize url
 		$normalizedUrl = $this->_encode_rfc3986($this->_normalizeUrl($url));
 		$method = $this->_encode_rfc3986($method); // don't need this but why not?
 
 		$signatureBaseString = "{$method}&{$normalizedUrl}&{$concatenatedParams}";
+
 		return $this->_signString($signatureBaseString);
 	}
 	
@@ -633,6 +655,7 @@ class flickrOauth extends flickrConnection {
 		{
 			case 'HMAC-SHA1':
 				$key = $this->_encode_rfc3986($this->_getConsumerSecret()) . '&' . $this->_encode_rfc3986($this->_getAccessSecret());
+				#irc_debug('key:' . $key);
 				$retval = base64_encode(hash_hmac('sha1', $string, $key, true));
 			break;
 		}
