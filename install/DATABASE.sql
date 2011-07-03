@@ -1,4 +1,5 @@
 INSERT INTO `settings` VALUES(NULL, 1, 'flickr', 'enabled', 'TRUE');
+INSERT INTO `settings` VALUES(NULL, 1, 'flickr', 'date_style', 'SIMPLE');
 INSERT INTO `settings` VALUES(NULL, 1, 'flickr', 'consumer_key', '');
 INSERT INTO `settings` VALUES(NULL, 1, 'flickr', 'consumer_key_secret', '');
 INSERT INTO `settings` VALUES(NULL, 1, 'flickr', 'social_login', 'TRUE');

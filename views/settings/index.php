@@ -48,6 +48,18 @@
 <span class="item_separator"></span>
 
 <div class="content_wrap_inner">
+
+	<h3>Display</h3>
+
+	<p>Date
+	<?= form_dropdown('date_style', config_item('date_style_types'), $settings['flickr']['date_style']) ?>
+	</p>
+	
+</div>
+
+<span class="item_separator"></span>
+
+<div class="content_wrap_inner">
 			
 	<h3>Comments</h3>	
 
