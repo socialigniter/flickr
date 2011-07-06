@@ -30,10 +30,25 @@ class Connections extends MY_Controller
 	
 	function test()
 	{
-			$tokens 			= $this->flickr_library->get_tokens();	
-			$check_connection	= $this->social_auth->check_connection_auth('flickr', $tokens['oauth_token'], $tokens['oauth_token_secret']);
-			$flickr_user		= $this->flickr_library->call('get', 'flickr.test.login');
+		if ($connection = $this->social_auth->check_connection_user($this->oauth_user_id, 'flickr', 'primary'))
+		{
+			$this->tweet->set_tokens(array('oauth_token' => $connection->auth_one, 'oauth_token_secret' => $connection->auth_two));
 
+			$twitter_post = $this->tweet->call('post', 'statuses/update', array('status' => $this->input->post('content')));		
+
+			$message = array('status' => 'success', 'message' => 'Posted to Twitter successfully', 'data' => $twitter_post);
+		}
+		else
+		{
+			$message = array('status' => 'error', 'message' => 'No Twitter account for that user');			
+		}
+
+
+		$tokens 			= $this->flickr_library->get_tokens();	
+
+		$check_connection	= $this->social_auth->check_connection_auth('flickr', $tokens['oauth_token'], $tokens['oauth_token_secret']);
+
+		$flickr_user		= $this->flickr_library->call('get', 'flickr.test.login');
 
 		print_r($flickr_user);
 	}
